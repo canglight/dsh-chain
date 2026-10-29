@@ -1,6 +1,6 @@
 {
   "name": "dsh-chain-shared",
-  "version": "1.5.11",
+  "version": "1.5.12",
   "description": "Thinking-chain memory for DeepSeek Harness (all-sessions edition): remember WHY a decision was made, recall it by keyword, inject it into every session's prompt, and browse it as a 3D nebula graph.",
   "author": "末苍和她的大肥鱼",
   "license": "MIT",

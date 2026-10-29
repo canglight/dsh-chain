@@ -4,3 +4,4 @@ node_modules/
 *.off
 .tmp-*
 tools/eval-queries.json
+.orig/

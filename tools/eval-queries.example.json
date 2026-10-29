@@ -1,0 +1,9 @@
+{
+  "_说明": "示例评估集：query 是你现实中会问的一句话；expect 是期望命中的那条记忆 judgement 里的独特子串（不绑 id，换库也能跑）。复制成 tools/eval-queries.json 后改成你自己的查询。paraphrase=true 表示刻意换过说法——这一类最能暴露检索短板。",
+  "queries": [
+    { "query": "部署脚本放在哪个目录", "expect": "部署脚本统一放 deploy", "paraphrase": false },
+    { "query": "为什么不用那个缓存方案", "expect": "缓存方案因为内存吃满被否", "paraphrase": false },
+    { "query": "它当时为什么没用 docker", "expect": "容器化因为内网拉不到镜像先搁置", "paraphrase": true },
+    { "query": "那台机器内存多大来着", "expect": "本机 32GB 内存", "paraphrase": false }
+  ]
+}

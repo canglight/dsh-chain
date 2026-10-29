@@ -1,0 +1,49 @@
+{
+  "name": "dsh-chain-shared",
+  "version": "1.5.9",
+  "description": "Thinking-chain memory for DeepSeek Harness (all-sessions edition): remember WHY a decision was made, recall it by keyword, inject it into every session's prompt, and browse it as a 3D nebula graph.",
+  "author": "末苍和她的大肥鱼",
+  "license": "MIT",
+  "type": "module",
+  "main": "./lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./api": "./lib/api.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "cordis.patch.yml",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "memory",
+    "chain-of-thought",
+    "decision-log",
+    "graph",
+    "nebula"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-client-runtime"
+      ],
+      "platform": "web"
+    }
+  },
+  "dependencies": {
+    "@deepseek-ai/schemastery": "^3.18.4",
+    "@node-rs/jieba": "^2.0.4"
+  }
+}

@@ -1,5 +1,7 @@
 # dsh-chain-shared · 思维链记忆（全会话通用版）
 
+![封面](docs/cover.png)
+
 > 给 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 用的记忆插件。
 >
 > **它记的不是"发生了什么"，而是"当时为什么这么定"。**

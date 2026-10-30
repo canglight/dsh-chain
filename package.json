@@ -1,7 +1,7 @@
 {
   "name": "dsh-chain-shared",
-  "version": "1.6.1",
-  "description": "Thinking-chain memory for DeepSeek Harness (all-sessions edition): remember WHY a decision was made, recall it by keyword, inject it into every session's prompt, and browse it as a 3D nebula graph.",
+  "version": "2.0.0",
+  "description": "Thinking-chain memory for DeepSeek Harness (all-sessions edition): remember WHY a decision was made, recall it by keyword or meaning, inject it into every session's prompt, and browse it as a 3D nebula graph.",
   "author": "末苍和她的大肥鱼",
   "license": "MIT",
   "type": "module",
@@ -16,7 +16,8 @@
     "lib",
     "cordis.patch.yml",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "CHANGELOG.md"
   ],
   "engines": {
     "node": ">=20"
@@ -29,7 +30,10 @@
     "chain-of-thought",
     "decision-log",
     "graph",
-    "nebula"
+    "nebula",
+    "semantic-search",
+    "embedding",
+    "meta-memory"
   ],
   "dsh": {
     "bundle": {
@@ -45,5 +49,8 @@
   "dependencies": {
     "@deepseek-ai/schemastery": "^3.18.4",
     "@node-rs/jieba": "^2.0.4"
+  },
+  "optionalDependencies": {
+    "@huggingface/transformers": "^3.7.0"
   }
 }

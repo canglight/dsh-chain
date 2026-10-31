@@ -5,3 +5,4 @@ node_modules/
 .tmp-*
 tools/eval-queries.json
 .orig/
+*.bak*

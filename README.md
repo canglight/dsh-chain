@@ -1,5 +1,7 @@
 # dsh-chain-shared · 思维链记忆（全会话通用版）
 
+当前版本：**2.2.0**。2.1 未单独发布，其间更新合入本版。
+
 ![封面](docs/cover.png)
 
 > 给 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 用的记忆插件。
@@ -55,6 +57,8 @@ pnpm add link:~/.dsh/plugins/dsh-chain-shared     # 或用 dsh plugin add
 
 然后**重启一次 DSH**（插件清单变更不热加载）。
 
+默认不按会话过滤。如需限定会话，可在启动 DSH 前设置环境变量 `DSH_CHAIN_TARGET_SESSION_IDS`（逗号分隔会话 id）；缺省空字符串表示全会话共享。画布标签从服务端读取该配置。
+
 首次装上时记忆是**空的** —— 需要你在对话里让它记东西，或者用 `chain_append` 工具写第一条。
 
 ### 依赖
@@ -81,22 +85,28 @@ pnpm add link:~/.dsh/plugins/dsh-chain-shared     # 或用 dsh plugin add
 
 ## 它提供什么
 
+2.2.0 新增矛盾候选工具、eventId 分组、受限自动退役，以及夜巡的矛盾 / 同事件审查；2.1 的小更新已合入，详见 [CHANGELOG.md](./CHANGELOG.md)。
+
 > **2.0 起多了什么**：注入里会出现「这次联想到的」（在链上走 1–2 跳）与可选的「语义补位」；
 > 多了 `chain_about` 这个元记忆出口；画布上多了感知 / 元记忆两块面板和一行「夜巡 16:51 · N 条」状态。
 > 感知层目前**只记录、不改变行为** —— 这点写在 CHANGELOG 的「已知限制」里。
 
-### 7 个工具
+### 8 个工具
 
 | 工具 | 干什么 |
 |---|---|
-| `chain_append` | 写一条判断（judgement / evidence / hesitation / conclusion / tags / weight） |
-| `chain_recall` | 按关键词 / 日期 / 权重查 |
+| `chain_append` | 写一条判断（judgement / evidence / hesitation / conclusion / tags / weight，可选 eventId） |
+| `chain_recall` | 按关键词 / 日期 / 权重查；最多补带 2 条 sameEvent 同组记录 |
 | `chain_graph` | 导出图谱（Mermaid） |
 | `chain_touch` | 给一条已有记录标「确认」或「被推翻」（确认 +0.05，推翻降到存档线） |
 | `chain_mood` | 写**当前情绪**（单一状态牌，会自己过期） |
 | `chain_patrol` | 手动跑一次夜巡，出报告 |
-| `chain_about` | **问「关于 X 我知道什么」**：返回被想起次数 / 人工确认次数 / 生命周期状态 /
-  是否被取代 / 依据条数。只读 —— 调它不算"想起" |
+| `chain_about` | **问「关于 X 我知道什么」**：返回被想起次数 / 人工确认次数 / 生命周期状态 / 是否被取代 / 依据条数。只读 —— 调它不算"想起" |
+| `chain_conflict` | 指定 ids: [a, b] 直接比较，或查同池候选；泛词过滤与 strong 排序，只报告线索 |
+
+同一次决策可用可选 `eventId` 串起前后判断；`chain_recall` / `chain_about` 最多补带 2 条同组记录并标记 `sameEvent: true`。带 eventId 的新判断在前段出现推翻词时，可自动退役同组未退役旧条，核心池受保护，单次最多 2 条，相同载荷重试复用新条；历史正文不变。
+
+生命周期事件共 5 种：`touch`（人工确认）、`recall`（自动命中）、`supersede`（退役）、`rebalance`（调权重）、`retag`（定池）；eventId 是记录字段，不是新增事件类型。
 
 ### 1 个注入段
 
@@ -121,7 +131,7 @@ pnpm add link:~/.dsh/plugins/dsh-chain-shared     # 或用 dsh plugin add
 
 ### 1 个可视化 tab
 
-会话视图里的「思维链」tab：3D 星云图，七个记忆池各成一簇，可拖拽旋转 / 滚轮缩放 / 点节点看详情；新记忆会在 9 秒内自己长出来。
+会话视图里的「思维链」tab：3D 星云图，八个记忆池各成一簇（另有决策 / 元记忆虚拟区），可拖拽旋转 / 滚轮缩放 / 点节点看详情；新记忆会在 9 秒内自己长出来。
 
 ---
 
@@ -129,7 +139,7 @@ pnpm add link:~/.dsh/plugins/dsh-chain-shared     # 或用 dsh plugin add
 
 注入不是"取最近 N 条"，而是**拿字符预算往里装**：
 
-- 四个池（事实 / 技能 / 核心日常 / 片面日常）的候选合成一个池，**按权重全局排序**逐条装；
+- 四个常驻候选池（事实 / 铁律 / 核心日常 / 片面日常；经验按需）的候选合成一个池，**按权重全局排序**逐条装；
 - 装不下就跳过这条、继续试下一条（不是整段停）；
 - 装不下的条数写在段标题里：`另有 N 条未展开（chain_recall 可查）` —— **不静默丢**；
 - 核心段永不参与装箱（它本来就该全量在）。
@@ -171,7 +181,7 @@ pnpm add link:~/.dsh/plugins/dsh-chain-shared     # 或用 dsh plugin add
 
 ```
 标签没命中任何池
-  → 落「海马体」（原料缓冲区：3 天过期、永不注入）+ 打「未归类」标注
+  → 落「海马体」（原料缓冲区：14 天归档、永不注入）+ 打「未归类」标注
   → 夜巡第 ⑥ 节单独列出来审
   → 同一句重复写满 3 次 → 升级「需人工定池」
 ```
@@ -184,7 +194,7 @@ pnpm add link:~/.dsh/plugins/dsh-chain-shared     # 或用 dsh plugin add
 被它覆盖的原料会**自动退役**（判据：双向包含，或二元组相似 ≥0.55）。
 
 所以「重复提交」不会让海马体膨胀：写完判断，原料自己让位。
-剩下的纯噪声（「重启了」这类）三天后自然过期。
+剩下的纯噪声（「重启了」这类）按海马体寿命衰减，默认 14 天归档。
 
 ---
 
@@ -214,11 +224,11 @@ pnpm add link:~/.dsh/plugins/dsh-chain-shared     # 或用 dsh plugin add
 ## 夜巡（每天 18:00 后自动跑一次）
 
 - 起一个检查：每 10 分钟看一次「**现在 ≥ 18:00** 且**今天的报告还不存在**」
-- 满足就跑：先按规则调权重（**只写 rebalance 事件，正文一个字不动**），再生成报告
+- 满足就跑：生成审查报告，自动夜巡不写归整或退役事件；手动 `chain_patrol({ apply: true })` 可显式执行权重归整
 - 报告落在 `~/.dsh/memories/.chain-shared/patrol/YYYY-MM-DD.md`
 
-报告含五节：久未命中 / 疑似重复 / 共享关键词却没连线 / 海马体待整理 / 自动归整。
-**它只出清单，不改记忆内容** —— 合并、取代、归档都留给人拍板。
+报告正文含 10 个检查小节（不计概览）：久未命中 / 疑似重复 / 共享关键词但没连线 / 矛盾候选 / 同事件对账 / 半写断裂 / 历史 eventId 粗回填建议 / 海马体待整理 / 自动归整 / 未归类待审。有关系边时另附第 11 节「联想网络」。
+矛盾与同事件检查只报告，不自动回填或退役；同事件自动退役发生在满足条件的 `chain_append` 新写入时。
 
 > 开机时如果已过 18:00，60 秒后会补跑一次，一天只跑一次（用报告文件做幂等锁）。
 
@@ -247,7 +257,7 @@ pnpm add link:~/.dsh/plugins/dsh-chain-shared     # 或用 dsh plugin add
 |---|---|
 | 什么都没配 | 唤醒**最近说话**的会话 |
 | 配了 `wakeSessionId` | 叫醒它 |
-| 目标会话正在运行 | 显式指定的 → **跳过**；自动挑的 → **排队**（`mode=queue`，不打断）|
+| 目标会话正在运行 | **排队**（`mode=queue`，不打断）|
 | `wakeEnabled: false` | 一律不叫 |
 
 自检（不会发消息）：
@@ -270,7 +280,7 @@ node lib/wake.mjs prompt --dry   # 只打印要投递什么
 | `coreMax` | 核心池上限（满了拒绝新增「原则／人格」；默认 32）|
 | `patrolHour` | 夜巡每天几点之后开始（默认 18）|
 
-池的 key：`core` / `fact` / `skill` / `dailyCore` / `dailyPartial` / `emotion` / `hippocampus`。
+池的 key：`core` / `fact` / `skillRule` / `skillExp` / `dailyCore` / `dailyPartial` / `emotion` / `hippocampus`。
 
 **改完立刻生效，不用重启**：面板调的是插件自己的接口 `/chain-shared/api/settings`，
 宿主侧收到就直接换掉运行时配置，同时把值写进
